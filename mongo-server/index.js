@@ -25,7 +25,7 @@ mongoose
 
 app.use("/api/auth", authRoutes);
 
-app.use(express.static(path.join(__dirname, "../mongo-client/pages")));
+app.use(express.static(path.join(__dirname, "/pages")));
 
 app.use(errorHandler);
 

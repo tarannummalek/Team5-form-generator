@@ -1,10 +1,11 @@
 {
-  "port" : 5050,
-  "host" : "localhost",
-  "username" : "#####",
-  "userpassword": "####",
-  "userstring": "####",
-  "clustername": "valtech",
-  "dbname": "Form"
+  "port":5050,
+  "host":"localhost",
+  "username":"formgenerator",
+  "userpassword":"admin",
+  "userstring":"3l72uzj",
+  "clustername":"valtech",
+  "dbname":"formDB"
+
 }
 
