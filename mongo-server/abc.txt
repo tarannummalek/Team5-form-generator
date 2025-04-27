@@ -1,0 +1,90 @@
+const express = require("express");
+let mongoose = require("mongoose");
+// const errorHandler = require("./utils").errorHandler;
+const config = require("./config.json");
+let app = express();
+app.use(express.json());
+app.use(express.static("public"));
+let url = `mongodb+srv://${config.username}:${config.userpassword}@${config.dbname}.${config.userstring}.mongodb.net/${config.dbname}?retryWrites=true&w=majority&appName=Valtech`;
+ 
+mongoose
+  .connect(url)
+  .then(() => {
+    console.log("DB Connected");
+  })
+  .catch((error) => {
+    console.log("Error", error);
+  });
+ 
+let Schema = mongoose.Schema;
+let ObjectId = mongoose.Schema.ObjectId;
+ 
+let Form = mongoose.model(
+  "Form",
+  new Schema({
+    formId: ObjectId,
+    title: String,
+    noOfQues: Number,
+    questions: [
+      {
+        question: String,
+        type: String,
+      },
+    ],
+  })
+);
+ 
+let FormResponse = mongoose.model(
+  "FormResponse",
+  new Schema(
+  )
+);
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/public/views/user-dashboard.html");
+});
+app.get("/forms/:formId", (req, res) => {
+  res.sendFile(__dirname + "/public/views/user-formpage.html");
+});
+app.get("/forms", (req, res) => {
+  Form.find()
+    .then((forms) => {
+      res.json(forms);
+    })
+    .catch((error) => res.status(500).json({ error: "Failed to fetch forms" }));
+});
+app.get("/api/forms/:formId", (req, res) => {
+  Form.findById(req.params.formId)
+    .then((form) => {
+      if (!form) return res.status(404).json({ message: "Form not found" });
+      res.json(form);
+    })
+    .catch(() => res.status(500).json({ error: "Failed to fetch form" }));
+});
+app.post("/submit-response", (req, res) => {
+  const { formId, userId, responses } = req.body;
+  let formResponse = new FormResponse({
+    formId,
+    userId,
+    responses,
+  });
+  formResponse
+    .save()
+    .then(() => {
+      res.status(200).json({ message: "Responses saved successfully" });
+    })
+    .catch((error) =>
+      res.status(500).json({ error: "Failed to save responses" })
+    );
+});
+app.listen(config.port, config.host, () => {
+  console.log("Server running on " + config.host + ":" + config.port);
+});
+
+//     "port" : 4000,
+//     "host" : "localhost",
+//     "username" : "varnikajainit24",
+//     "userpassword" : "varni4802",
+//     "userstring" : "owxh2h3",
+//     "clustername" : "valtech",
+//     "dbname" : "teamAssign"
+// 
