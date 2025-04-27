@@ -61,7 +61,7 @@ app.get("/api/forms/:formId", (req, res) => {
 app.post("/submit-response", (req, res) => {
   const { formId, userId, responses } = req.body;
 console.log(req.body.responses);
-  // Create a new form response object
+
   let formResponse = new FormResponse({
     formId,
     userId,
@@ -72,7 +72,6 @@ console.log(req.body.responses);
   });
 console.log(formResponse);
 alert("wait");
-  // Save the form response to the database
   formResponse
     .save()
     .then(() => {
