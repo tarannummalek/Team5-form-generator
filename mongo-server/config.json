@@ -1,0 +1,10 @@
+{
+  "port" : 5050,
+  "host" : "localhost",
+  "username" : "#####",
+  "userpassword": "####",
+  "userstring": "####",
+  "clustername": "valtech",
+  "dbname": "Form"
+}
+
