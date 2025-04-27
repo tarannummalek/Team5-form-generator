@@ -1,44 +1,54 @@
 const express = require("express");
-let mongoose = require("mongoose");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const path = require("path");
+const authRoutes = require("./routes/auth");
+const { errorHandler } = require("./utils/errorHandler");
 const config = require("./config.json");
-let app = express();
-app.use(express.json());
-app.use(express.static("public"));
 
-let url = `mongodb+srv://${config.username}:${config.userpassword}@${config.dbname}.${config.userstring}.mongodb.net/${config.dbname}?retryWrites=true&w=majority&appName=Valtech`;
+const app = express();
+
+app.use(
+  cors({
+    origin: "http://localhost:5050",
+    credentials: true,
+  })
+);
+
+app.use(express.json());
+
+
+const url = `mongodb+srv://${config.username}:${config.userpassword}@${config.dbname}.${config.userstring}.mongodb.net/${config.dbname}?retryWrites=true&w=majority&appName=Valtech`;
 
 mongoose
   .connect(url)
-  .then(() => {
-    console.log("DB Connected");
-  })
-  .catch((error) => {
-    console.log("Error", error);
-  });
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.error("MongoDB Connection Error:", err));
 
-let Schema = mongoose.Schema;
-let ObjectId = mongoose.Schema.Types.ObjectId;
+app.use("/api/auth", authRoutes);
 
-let Form = mongoose.model(
+const Schema = mongoose.Schema;
+const ObjectId = mongoose.Schema.ObjectId;
+
+const Form = mongoose.model(
   "Form",
   new Schema({
-    formId: { type: ObjectId, auto: true },
-    title: { type: String, required: true },
-    noOfQues: { type: Number, required: true },
+    formId: ObjectId,
+    title: String,
+    noOfQues: Number,
     questions: [
       {
-        question: { type: String},
-        type: { type: String},
+        question: String,
+        type: String,
       },
     ],
   })
 );
 
-
-let FormResponse = mongoose.model(
+const FormResponse = mongoose.model(
   "FormResponse",
   new Schema({
-    formId: { type: ObjectId, ref: "Form", required: true },
+    formId: { type: mongoose.Schema.Types.ObjectId, ref: "Form", required: true },
     userId: { type: String, required: true },
     responses: [
       {
@@ -49,15 +59,13 @@ let FormResponse = mongoose.model(
   })
 );
 
-
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/public/views/user-dashboard.html");
+  res.sendFile(path.join(__dirname, "/public/views/user-dashboard.html"));
 });
 
 app.get("/forms/:formId", (req, res) => {
-  res.sendFile(__dirname + "/public/views/user-formpage.html");
+  res.sendFile(path.join(__dirname, "/public/views/user-formpage.html"));
 });
-
 
 app.get("/forms", (req, res) => {
   Form.find()
@@ -67,37 +75,19 @@ app.get("/forms", (req, res) => {
     .catch((error) => res.status(500).json({ error: "Failed to fetch forms" }));
 });
 
-
 app.get("/api/forms/:formId", (req, res) => {
   Form.findById(req.params.formId)
     .then((form) => {
       if (!form) return res.status(404).json({ message: "Form not found" });
-
-      const formattedForm = {
-        formId: form._id,
-        title: form.title,
-        questions: form.questions.map((q) => ({
-          question: q.question,
-          type: q.type,
-        })),
-      };
-
-      res.json(formattedForm);
+      res.json(form);
     })
     .catch(() => res.status(500).json({ error: "Failed to fetch form" }));
 });
 
 app.post("/submit-response", (req, res) => {
   const { formId, userId, responses } = req.body;
-
-
-  if (!mongoose.Types.ObjectId.isValid(formId)) {
-    return res.status(400).json({ error: "Invalid formId" });
-  }
-
-
   let formResponse = new FormResponse({
-    formId: mongoose.Types.ObjectId(formId), 
+    formId,
     userId,
     responses,
   });
@@ -107,12 +97,18 @@ app.post("/submit-response", (req, res) => {
     .then(() => {
       res.status(200).json({ message: "Responses saved successfully" });
     })
-    .catch((error) =>
-      res.status(500).json({ error: "Failed to save responses", details: error.message })
-    );
+    .catch((error) => {
+      res.status(500).json({ error: "Failed to save responses" });
+    });
 });
 
+app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "../mongo-client/pages")));
 
-app.listen(config.port, config.host, () => {
-  console.log("Server running on " + config.host + ":" + config.port);
+app.use(errorHandler);
+
+const PORT = config.port || 5050;
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
 });
+
