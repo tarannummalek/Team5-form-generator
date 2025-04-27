@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Responses</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7"
+      crossorigin="anonymous"
+    />
+    <script>
+      function getResponseIdFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("id");
+      }
+
+      function init() {
+        const id = getResponseIdFromUrl();
+
+        if (!id) {
+          console.error("ID missing in URL");
+          return;
+        }
+
+        $.ajax({
+          method: "get",
+          url: `/responses/${id}`,
+          success: function (data) {
+            $("h2").text(`${data.username} : ${data.formTitle}`);
+            $("tbody").empty();
+
+            data.userResponses.forEach(function (val, idx) {
+              $("tbody").append(`
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td>${val.question}</td>
+                    <td>${val.response}</td>
+                </tr>
+            `);
+            });
+          },
+          error: function (err) {
+            console.log("Error ", err);
+          },
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", init);
+    </script>
+    <style>
+        body {
+        background: #020024;
+        background: linear-gradient(
+          90deg,
+          rgba(2, 0, 36, 1) 0%,
+          rgba(9, 9, 121, 1) 35%,
+          rgba(0, 212, 255, 1) 100%
+        );
+      }
+      section {
+        margin: 30px 100px;
+      }
+      h2 {
+        margin-bottom: 50px;
+        font-family: sans-serif;
+        color: chartreuse;
+        font-style: italic;
+      }
+      .table {
+        width: 900px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="bg-black p-2">
+      <h1 class="text-light ms-5">User Response</h1>
+    </header>
+    <section>
+      <!-- <h2>UserName : FormTitle</h2> -->
+      <h2></h2>
+      <table
+        class="table table-striped table-hover table-light table-bordered"
+      >
+        <thead class="table-dark">
+          <tr>
+            <th>Question No.</th>
+            <th>Question</th>
+            <th>Response</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </section>
+  </body>
+</html>
