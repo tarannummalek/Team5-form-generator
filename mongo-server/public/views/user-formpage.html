@@ -1,161 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fill Form</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-        integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7"
-        crossorigin="anonymous"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7"
+      crossorigin="anonymous"
     />
     <script>
-        let formId = window.location.pathname.split("/")[2];
+      let formId = window.location.pathname.split("/")[2];
 
-        function loadForm() {
-            $.ajax({
-                method: "GET",
-                url: `/api/forms/${formId}`,
-                success: function (data) {
-                    $("form").empty(); 
-                    console.log(data);
+      function loadForm() {
+        $.ajax({
+          method: "GET",
+          url: `/api/forms/${formId}`,
+          success: function (data) {
+            $("form").empty();
+            console.log(data);
+            $("#ftitle").text(data.title);
+            data.questions.forEach((q, idx) => {
+              let inputHtml = "";
 
-                    data.questions.forEach((q, idx) => {
-                        let inputHtml = "";
+              switch (q.questionType) {
+                case "textarea":
+                  inputHtml = `<textarea class="form-control" id="answer-${idx}" rows="3" placeholder="Your answer"></textarea>`;
+                  break;
+                case "email":
+                case "number":
+                case "text":
+                case "date":
+                case "tel":
+                default:
+                  inputHtml = `<input type="${q.questionType}" class="form-control" id="answer-${idx}-${q.name}" placeholder="Your answer" required />
+`;
+                  break;
+                case "select":
+                  inputHtml = `<select class="form-control" id="answer-${idx}">`;
+                  q.option.forEach((option) => {
+                    inputHtml += `<option value="${option}">${option}</option>`;
+                  });
+                  inputHtml += `</select>`;
+                  break;
+                case "radio":
+                  q.option.forEach((option) => {
+                    inputHtml += `
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="answer-${idx}" id="answer-${idx}-${option}" value="${option}">
+            <label class="form-check-label" for="answer-${idx}-${option}">
+              ${option}
+            </label>
+          </div>
+        `;
+                  });
+                  break;
+                case "checkbox":
+                  q.option.forEach((option) => {
+                    inputHtml += `
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="answer-${idx}" id="answer-${idx}-${option}" value="${option}">
+            <label class="form-check-label" for="answer-${idx}-${option}">
+              ${option}
+            </label>
+          </div>
+        `;
+                  });
+                  break;
+              }
 
-                        switch (q.type) {
-                            case "textarea":
-                                inputHtml = `<textarea class="form-control" id="answer-${idx}" rows="3" placeholder="Your answer"></textarea>`;
-                                break;
-                            case "number":
-                            case "email":
-                            case "date":
-                            case "text":
-                            default:
-                                inputHtml = `<input type="${q.type || "text"}" class="form-control" id="answer-${idx}" placeholder="Your answer" required />`;
-                                break;
-                        }
+              $("form").append(`
+    <div class="mb-3">
+      <label for="answer-${idx}" class="form-label">${q.questionText}</label>
+      ${inputHtml}
+    </div>
+  `);
+            });
 
-                        $("form").append(`
-                            <div class="mb-3">
-                                <label for="answer-${idx}" class="form-label">${q.question}</label>
-                                ${inputHtml}
-                            </div>
-                        `);
-                    });
-
-                    $("form").append(`
+            $("form").append(`
                         <div class="mb-3">
-                            <button id="submitBtn" class="btn btn-success w-100">Submit Responses</button>
+                            <button id="submitBtn" class="btn btn-primary w-100">Submit Responses</button>
                         </div>
                     `);
 
-
-                    $("#submitBtn").on("click", function (e) {
-                        e.preventDefault(); 
-                        saveResponses(data.questions);
-                    });
-                },
-                error: function (err) {
-                    console.log("Error loading form: ", err);
-                },
+            $("#submitBtn").on("click", function (e) {
+              e.preventDefault();
+              saveResponses(data.questions);
             });
-        }
-
-        function saveResponses(questions) {
-            let responses = [];
-
-            $("form input, form textarea").each(function (idx) {
-                let answer = $(this).val();
-                let questionText = questions[idx].question;
-
-                responses.push({
-                    question: questionText,
-                    answer: answer,
-                });
-            });
-
-            let userId = "user123";
-            $.ajax({
-                url: "/submit-response",
-                method: "POST",
-                dataType: "json",
-                contentType: "application/json",
-                data: JSON.stringify({
-                    formId,
-                    userId,
-                    responses,
-                }),
-                success: function (res) {
-                    console.log(res);
-                    alert("Responses submitted!");
-                    window.location.href = "/";
-                },
-                error: function (error) {
-                    console.log("Error submitting response", error);
-                },
-            });
-        }
-
-        $(document).ready(function () {
-            loadForm();
+          },
+          error: function (err) {
+            console.log("Error loading form: ", err);
+          },
         });
+      }
+
+      function saveResponses(questions, formId) {
+        console.log(" in save")
+        let responses = [];
+
+        if (!Array.isArray(questions) || questions.length === 0) {
+          console.error("No questions data available");
+          return;
+        }
+
+        $("form input, form textarea, form select").each(function (idx) {
+          let response = $(this).val();
+
+          if (questions[idx]) {
+            let questionText = questions[idx].questionText; 
+            responses.push({
+              questionText: questionText,
+              response: response,
+            });
+          } else {
+            console.log(`No question found at index ${idx}`);
+          }
+        });
+
+        let userId = "user123"; 
+        $.ajax({
+          url: "/submit-response",
+          method: "POST",
+          dataType: "json",
+          contentType: "application/json",
+          data: JSON.stringify({
+            formId: formId,
+            userId: userId,
+            responses: responses,
+          }),
+          success: function (res) {
+            console.log(res);
+            alert("Responses submitted successfully!");
+            window.location.href = "/";
+          },
+          error: function (error) {
+            console.log("Error submitting response", error);
+          },
+        });
+      }
+
+      $(document).ready(function () {
+        loadForm();
+      });
     </script>
-</head>
-<body class="bg-light" style="
-    background: #020024;
-    background: linear-gradient(
+  </head>
+  <body
+    class="bg-light"
+    style="
+      background: #020024;
+      background: linear-gradient(
         90deg,
         rgba(2, 0, 36, 1) 0%,
         rgba(9, 9, 121, 1) 35%,
         rgba(0, 212, 255, 1) 100%
-    );
-">
+      );
+    "
+  >
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">Form Builder</a>
-            <button
-                class="navbar-toggler"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#navbarNav"
-                aria-controls="navbarNav"
-                aria-expanded="false"
-                aria-label="Toggle navigation"
-            >
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Contact</a>
-                    </li>
-                </ul>
-            </div>
+      <div class="container">
+        <a class="navbar-brand" href="/">Form Builder</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+              <a class="nav-link active" href="/">Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">About</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Contact</a>
+            </li>
+          </ul>
         </div>
+      </div>
     </nav>
 
     <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-12 col-md-8 col-lg-6">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-success text-white text-center">
-                        <h3>Fill the Form</h3>
-                    </div>
-                    <div class="card-body">
-                        <form></form>
-                    </div>
-                </div>
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+          <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white text-center">
+              <h3 id="ftitle">Fill the Form</h3>
             </div>
+            <div class="card-body">
+              <form></form>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
-</body>
+  </body>
 </html>

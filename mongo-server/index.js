@@ -5,7 +5,8 @@ const path = require("path");
 const authRoutes = require("./routes/auth");
 const { errorHandler } = require("./utils/errorHandler");
 const config = require("./config.json");
-
+const Form = require("./models/FormData");
+const FormResponse = require("./models/FormResponse");
 const app = express();
 
 app.use(
@@ -27,39 +28,7 @@ mongoose
 
 app.use("/api/auth", authRoutes);
 
-const Schema = mongoose.Schema;
-const ObjectId = mongoose.Schema.ObjectId;
-
-const Form = mongoose.model(
-  "Form",
-  new Schema({
-    formId: ObjectId,
-    title: String,
-    noOfQues: Number,
-    questions: [
-      {
-        question: String,
-        type: String,
-      },
-    ],
-  })
-);
-
-const FormResponse = mongoose.model(
-  "FormResponse",
-  new Schema({
-    formId: { type: mongoose.Schema.Types.ObjectId, ref: "Form", required: true },
-    userId: { type: String, required: true },
-    responses: [
-      {
-        question: { type: String, required: true },
-        answer: { type: String, required: true },
-      },
-    ],
-  })
-);
-
-app.get("/", (req, res) => {
+app.get("/user-dashboard", (req, res) => {
   res.sendFile(path.join(__dirname, "/public/views/user-dashboard.html"));
 });
 
@@ -71,8 +40,10 @@ app.get("/login", (req, res) => {
   });
   
 app.get("/forms", (req, res) => {
+  console.log("in form");
   Form.find()
     .then((forms) => {
+      console.log(forms)
       res.json(forms);
     })
     .catch((error) => res.status(500).json({ error: "Failed to fetch forms" }));
@@ -89,21 +60,29 @@ app.get("/api/forms/:formId", (req, res) => {
 
 app.post("/submit-response", (req, res) => {
   const { formId, userId, responses } = req.body;
+console.log(req.body.responses);
+  // Create a new form response object
   let formResponse = new FormResponse({
     formId,
     userId,
-    responses,
+    responses: responses.map((response) => ({
+      questionText: response.questionText,  
+      response: response.response        
+    }))
   });
-
+console.log(formResponse);
+alert("wait");
+  // Save the form response to the database
   formResponse
     .save()
     .then(() => {
       res.status(200).json({ message: "Responses saved successfully" });
     })
     .catch((error) => {
-      res.status(500).json({ error: "Failed to save responses" });
+      res.status(500).json({ error: "Failed to save responses", details: error });
     });
 });
+
 
 app.use(express.static(path.join(__dirname, "public")));
  app.use(express.static(path.join(__dirname, "/public/views")));
