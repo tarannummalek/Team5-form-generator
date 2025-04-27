@@ -1,42 +1,35 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require("cors");
+const path = require("path");
+const authRoutes = require("./routes/auth");
+const { errorHandler } = require("./utils/errorHandler");
 const config = require("./config.json");
-let app = express();
+const Form = require("./models/FormData");
+const FormResponse = require("./models/FormResponse");
+const app = express();
 
-app.use(express.static("views"));
+app.use(
+  cors({
+    origin: "http://localhost:5050",
+    credentials: true,
+  })
+);
+app.use(errorHandler);
+
+const PORT = config.port || 5050;
+
 app.use(express.json());
-let url = `mongodb+srv://${config.username}:${config.userpassword}@${config.clustername}.${config.userstring}.mongodb.net/${config.dbname}?retryWrites=true&w=majority&appName=Valtech`;
+app.use(express.static("views"));
+app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "/public/views")));
+const url = `mongodb+srv://${config.username}:${config.userpassword}@${config.dbname}.${config.userstring}.mongodb.net/${config.dbname}?retryWrites=true&w=majority&appName=Valtech`;
 
 mongoose
   .connect(url)
-  .then((res) => {
-    console.log("DB Connected");
-  })
-  .catch((error) => {
-    console.log("Error ", error);
-  });
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.error("MongoDB Connection Error:", err));
 
-let Schema = mongoose.Schema;
-let ObjectId = mongoose.Schema.ObjectId;
-
-const questionSchema = new mongoose.Schema({
-  questionText: { type: String, required: true },
-  questionType: { type: String, required: true },
-  label: { type: String },
-  id: { type: String, required: true }, // no unique
-  name: { type: String, required: true },
-  option: { type: [String] },
-  accept: { type: String },
-});
-
-const formSchema = new mongoose.Schema({
-  id: { type: ObjectId, unique: true, required: true },
-  noOfQues: { type: Number, required: true },
-  title: { type: String, required: true },
-  questions: [questionSchema],
-});
-
-let FormData = mongoose.model("FormData", formSchema);
 
 const User = mongoose.model(
   "User",
@@ -49,26 +42,12 @@ const User = mongoose.model(
   })
 );
 
-const FormResponse = mongoose.model(
-  "FormResponse",
-  new Schema({
-    formid: { type: mongoose.Schema.Types.ObjectId, ref: "FormData" },
-    userid: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    userResponses: [
-      {
-        questionText: { type: String },
-        response: { type: String },
-      },
-    ],
-  })
-);
-
 app.get("/admin-dashboard", (req, res) => {
   res.sendFile(__dirname + "/views/index.html");
 });
 
 app.get("/admin/forms", (req, res) => {
-  FormData.find()
+  Form.find()
     .then((dbRes) => res.json(dbRes))
     .catch((error) => {
       console.log("Error fetching forms: ", error);
@@ -77,7 +56,39 @@ app.get("/admin/forms", (req, res) => {
 });
 
 app.get("/admin/forms/:id", (req, res) => {
-  FormData.findById(req.params.id)
+  Form.findById(req.params.id)
+   .then((form) => {
+      if (!form) return res.status(404).json({ message: "Form not found" });
+      res.json(form);
+    })
+    .catch(() => res.status(500).json({ error: "Failed to fetch form" }));
+});
+
+app.use("/api/auth", authRoutes);
+
+app.get("/user-dashboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "/public/views/user-dashboard.html"));
+});
+
+app.get("/forms/:formId", (req, res) => {
+  res.sendFile(path.join(__dirname, "/public/views/user-formpage.html"));
+});
+app.get("/login", (req, res) => {
+    res.sendFile(path.join(__dirname, "public/views", "login.html"));
+  });
+  
+app.get("/forms", (req, res) => {
+  console.log("in form");
+  Form.find()
+    .then((forms) => {
+      console.log(forms)
+      res.json(forms);
+    })
+    .catch((error) => res.status(500).json({ error: "Failed to fetch forms" }));
+});
+
+app.get("/api/forms/:formId", (req, res) => {
+  Form.findById(req.params.formId)
     .then((form) => {
       if (!form) return res.status(404).json({ message: "Form not found" });
       res.json(form);
@@ -123,10 +134,31 @@ app.get("/responses/:id", (req, res) => {
     );
 });
 
-app.listen(config.port, config.host, function (error) {
-  if (error) {
-    console.log("Error", error);
-  } else {
-    console.log("Express is live on port " + config.port);
-  }
+app.post("/submit-response", (req, res) => {
+  const { formId, userId, responses } = req.body;
+console.log(req.body.responses);
+
+  let formResponse = new FormResponse({
+    formId,
+    userId,
+    responses: responses.map((response) => ({
+      questionText: response.questionText,  
+      response: response.response        
+    }))
+  });
+console.log(formResponse);
+alert("wait");
+  formResponse
+    .save()
+    .then(() => {
+      res.status(200).json({ message: "Responses saved successfully" });
+    })
+    .catch((error) => {
+      res.status(500).json({ error: "Failed to save responses", details: error });
+    });
+});
+
+
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
 });

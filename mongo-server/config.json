@@ -1,9 +1,10 @@
+
 {
-"port" : 5050,
-"host" :"localhost",
-"username" :"vishalpansheriya12",
-"userpassword" :"GoEWMy3exBp8Exvk",
-"userstring" : "fkameiz",
-"clustername": "valtech",
-"dbname" : "formGenerator"
+  "port" : 5050,
+  "host" :"localhost",
+  "username" :"vishalpansheriya12",
+  "userpassword" :"GoEWMy3exBp8Exvk",
+  "userstring" : "fkameiz",
+  "clustername": "valtech",
+  "dbname" : "formGenerator"
 }
