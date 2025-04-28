@@ -38,7 +38,7 @@
                   inputHtml = `<input type="${q.questionType}" class="form-control" id="answer-${idx}-${q.name}" placeholder="Your answer" required />
 `;
                   break;
-                case "select":
+                case "dropdown":
                   inputHtml = `<select class="form-control" id="answer-${idx}">`;
                   q.option.forEach((option) => {
                     inputHtml += `<option value="${option}">${option}</option>`;
@@ -87,7 +87,7 @@
 
             $("#submitBtn").on("click", function (e) {
               e.preventDefault();
-              saveResponses(data.questions);
+              saveResponses(data.questions,formId);
             });
           },
           error: function (err) {
@@ -121,19 +121,21 @@
 
         let userId = "user123"; 
         $.ajax({
-          url: "/submit-response",
-          method: "POST",
-          dataType: "json",
-          contentType: "application/json",
           data: JSON.stringify({
             formId: formId,
             userId: userId,
             responses: responses,
           }),
+          url: "/submit-response",
+          method: "POST",
+          dataType: "json",
+          contentType: "application/json",
+          
+          
           success: function (res) {
             console.log(res);
             alert("Responses submitted successfully!");
-            window.location.href = "/";
+            window.location.href = "/user-dashboard";
           },
           error: function (error) {
             console.log("Error submitting response", error);

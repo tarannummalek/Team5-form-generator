@@ -7,6 +7,7 @@ const { errorHandler } = require("./utils/errorHandler");
 const config = require("./config.json");
 const FormData = require("./models/FormData");
 const FormResponse = require("./models/FormResponse");
+const { log } = require("console");
 const app = express();
 const port = config.port || 5050;
 app.use(
@@ -29,7 +30,9 @@ mongoose
   .connect(url)
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.error("MongoDB Connection Error:", err));
-
+  app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "/public/views", "login.html"));
+  });
 app.use("/api/auth", authRoutes);
 
 app.get("/user-dashboard", (req, res) => {
@@ -40,9 +43,7 @@ app.get("/forms/:formId", (req, res) => {
   res.sendFile(path.join(__dirname, "/public/views/user-formpage.html"));
 });
 
-app.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "/public/views", "login.html"));
-});
+
 app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "/public/views", "index.html"));
 });
@@ -121,6 +122,59 @@ app.post("/submit-response", (req, res) => {
     .catch((error) => {
       res.status(500).json({ error: "Failed to save responses", details: error });
     });
+});
+app.get("/admin/forms", (req, res) => {
+  FormData.find()
+    .then((dbRes) => res.json(dbRes))
+    .catch((error) => {
+      console.log("Error fetching forms: ", error);
+      res.status(500).send("Database error");
+    });
+});
+ 
+app.get("/admin/forms/:id", (req, res) => {
+  FormData.findById(req.params.id)
+   .then((form) => {
+      if (!form) return res.status(404).json({ message: "Form not found" });
+      res.json(form);
+    })
+    .catch(() => res.status(500).json({ error: "Failed to fetch form" }));
+});
+app.get("/responses", (req, res) => {
+  FormResponse.find()
+    .populate("formId")
+    .then((dbRes) => {
+      const formatted = dbRes.map((doc) => ({
+        id: doc._id,
+        username: doc.userId,
+        formTitle: doc.formId?.title,
+        userResponses: doc.responses,
+      }));
+      res.json(formatted);
+    })
+    .catch((error) => {
+      console.log("Error fetching responses: ", error);
+      res.status(500).send("Error fetching responses");
+    });
+});
+ 
+app.get("/responses/:id", (req, res) => {
+  FormResponse.findById(req.params.id)
+    .populate("formId")
+    .then((resp) => {
+      if (!resp) return res.status(404).json({ message: "No Response found" });
+      
+      const formatted = {
+        id: resp._id,
+        username: resp.userId,
+        formTitle: resp.formId?.title,
+        userResponses: resp.responses,
+      };
+      res.json(formatted);
+    })
+    .catch(() =>
+      res.status(500).json({ error: "Failed to fetch user response" })
+    );
 });
 
 app.use(errorHandler);

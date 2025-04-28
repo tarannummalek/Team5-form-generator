@@ -4,12 +4,11 @@ const { Schema } = mongoose;
 const formResponseSchema = new Schema({
   formId: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Form',
+    ref: 'FormData',
 
   },
   userId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User',
+    type: String
   
   },
   responses: [

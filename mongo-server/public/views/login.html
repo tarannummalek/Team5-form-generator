@@ -77,9 +77,9 @@
             if (response.ok) {
               alert("Login Successful!");
               if (result.role === "admin") {
-                window.location.href = "index.html";
+                window.location.href = "admin";
               } else {
-                window.location.href = "user-dashboard.html";
+                window.location.href = "user-dashboard";
               }
             } else {
               alert(result.message || "Login failed");

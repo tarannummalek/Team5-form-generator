@@ -36,7 +36,7 @@
               $("tbody").append(`
                 <tr>
                     <td>${idx + 1}</td>
-                    <td>${val.question}</td>
+                    <td>${val.questionText}</td>
                     <td>${val.response}</td>
                 </tr>
             `);
@@ -61,13 +61,14 @@
         );
       }
       section {
-        margin: 30px 100px;
+        margin: 30px 380px;
       }
       h2 {
         margin-bottom: 50px;
         font-family: sans-serif;
         color: chartreuse;
         font-style: italic;
+        text-align: center;
       }
       .table {
         width: 900px;

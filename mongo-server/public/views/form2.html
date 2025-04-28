@@ -7,20 +7,30 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f6f8fa;
       padding: 2rem;
       margin: 0;
+      background: #020024;
+        background: linear-gradient(
+          90deg,
+          rgba(2, 0, 36, 1) 0%,
+          rgba(9, 9, 121, 1) 35%,
+          rgba(0, 212, 255, 1) 100%
+        );
     }
+    
     h1 {
       text-align: center;
-      color: #333;
+      color: chartreuse;
     }
     #questions > div {
       background-color: #fff;
       border: 1px solid #ddd;
-      padding: 1rem;
-      margin-bottom: 1rem;
+      padding: 2rem;
+      
       border-radius: 6px;
+      width: 800px;
+      margin: auto;
+      margin-bottom: 1rem;
     }
     label {
       display: block;
@@ -36,15 +46,17 @@
       border-radius: 4px;
     }
     button {
-      margin-top: 1.5rem;
       padding: 0.75rem 1.5rem;
-      background-color: #007bff;
+      background-color: #5aaaff;
       border: none;
       color: white;
       font-weight: bold;
       border-radius: 4px;
       cursor: pointer;
-      width: 100%;
+      width: 800px;
+      display: block;
+      margin: auto;
+      margin-top: 1.5rem;
     }
     button:hover {
       background-color: #0056b3;
@@ -156,7 +168,7 @@
           questions
         };
 
-        fetch("http://localhost:3000/submitForm", {
+        fetch("http://localhost:5050/submitForm", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData)
