@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add Questions</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f6f8fa;
+      padding: 2rem;
+      margin: 0;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    #questions > div {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      margin-top: 1.5rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #007bff;
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>Add Questions</h1>
+  <div id="questions"></div>
+  <button id="submitForm">Submit Form</button>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      const title = urlParams.get("title");
+      const noOfQues = parseInt(urlParams.get("noOfQues"), 10);
+
+      const questionContainer = document.getElementById("questions");
+
+      for (let i = 0; i < noOfQues; i++) {
+        const div = document.createElement("div");
+
+        div.innerHTML = `
+          <h4>Question ${i + 1}</h4>
+          <label>Question Text:</label>
+          <input type="text" name="questionText" required>
+
+          <label>Type:</label>
+          <select name="questionType">
+            <option value="text">Text</option>
+            <option value="number">Number</option>
+            <option value="range">Range</option>
+            <option value="date">Date</option>
+            <option value="email">Email</option>
+            <option value="tel">Telephone</option>
+            <option value="dropdown">Dropdown</option>
+            <option value="radio">Radio</option>
+            <option value="checkbox">Checkbox</option>
+            <option value="file">File</option>
+            <option value="audio">Audio</option>
+            <option value="video">Video</option>
+          </select>
+
+          <div class="extraField"></div>
+
+          <label>Label:</label>
+          <input type="text" name="label">
+
+          <label>Name:</label>
+          <input type="text" name="name" required>
+        `;
+
+        questionContainer.appendChild(div);
+
+        const typeSelect = div.querySelector('[name="questionType"]');
+        const extraFieldDiv = div.querySelector(".extraField");
+
+        typeSelect.addEventListener("change", function () {
+          const selectedType = typeSelect.value;
+          extraFieldDiv.innerHTML = "";
+
+          if (["dropdown", "radio", "checkbox"].includes(selectedType)) {
+            extraFieldDiv.innerHTML = `
+              <label>Options (comma separated):</label>
+              <input type="text" name="options">
+            `;
+          } else if (["file", "audio", "video"].includes(selectedType)) {
+            extraFieldDiv.innerHTML = `
+              <label>Accepted File Types (e.g. .mp3, .mp4, .jpg):</label>
+              <input type="text" name="accept">
+            `;
+          }
+        });
+
+        typeSelect.dispatchEvent(new Event("change"));
+      }
+
+      document.getElementById("submitForm").addEventListener("click", function () {
+        const formElements = questionContainer.children;
+        const questions = [];
+
+        Array.from(formElements).forEach((div) => {
+          const question = {
+            questionText: div.querySelector('[name="questionText"]').value,
+            questionType: div.querySelector('[name="questionType"]').value,
+            label: div.querySelector('[name="label"]').value,
+            name: div.querySelector('[name="name"]').value
+          };
+
+          const optionsField = div.querySelector('[name="options"]');
+          if (optionsField) {
+            const rawOptions = optionsField.value.trim();
+            if (rawOptions.length > 0) {
+              question.option = rawOptions.split(",").map(opt => opt.trim());
+            }
+          }
+
+          const acceptField = div.querySelector('[name="accept"]');
+          if (acceptField) {
+            question.accept = acceptField.value;
+          }
+
+          questions.push(question);
+        });
+
+        const formData = {
+          title,
+          noOfQues,
+          questions
+        };
+
+        fetch("http://localhost:3000/submitForm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        })
+        .then((res) => res.json())
+        .then((data) => {
+          alert("Form submitted! ID: " + data.id);
+          window.location.href = "/";
+        })
+        .catch((err) => {
+          console.error("Submission error:", err);
+          alert("Error submitting form.");
+        });
+      });
+    });
+  </script>
+</body>
+</html>
