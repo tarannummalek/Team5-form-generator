@@ -45,7 +45,7 @@ app.get("/forms/:formId", (req, res) => {
 
 
 app.get("/admin", (req, res) => {
-  res.sendFile(path.join(__dirname, "/public/views", "index.html"));
+  res.sendFile(path.join(__dirname, "/public/views", "admin-dashboard.html"));
 });
 app.get("/admin1", (req, res) => {
   res.sendFile(path.join(__dirname, "/public/views/form1.html"));
