@@ -37,7 +37,7 @@ router.post("/login", async (req, res) => {
     if (email === "admin" && password === "admin") {
       return res
         .status(200)
-        .json({ message: "Admin login successful", role: "admin" });
+        .json({ message: "Admin login successful", role: "admin" , id: user._id});
     }
 
     const user = await User.findOne({ email });
@@ -50,7 +50,7 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    res.status(200).json({ message: "Login successful", role: user.role });
+    res.status(200).json({ message: "Login successful", role: user.role,  id: user._id });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Login failed" });
