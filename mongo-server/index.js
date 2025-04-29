@@ -143,10 +143,11 @@ app.get("/admin/forms/:id", (req, res) => {
 app.get("/responses", (req, res) => {
   FormResponse.find()
     .populate("formId")
+    .populate("userId")
     .then((dbRes) => {
       const formatted = dbRes.map((doc) => ({
         id: doc._id,
-        username: doc.userId,
+        username: doc.userId.username,
         formTitle: doc.formId?.title,
         userResponses: doc.responses,
       }));
@@ -161,12 +162,13 @@ app.get("/responses", (req, res) => {
 app.get("/responses/:id", (req, res) => {
   FormResponse.findById(req.params.id)
     .populate("formId")
+    .populate("userId")
     .then((resp) => {
       if (!resp) return res.status(404).json({ message: "No Response found" });
       
       const formatted = {
         id: resp._id,
-        username: resp.userId,
+        username: resp.userId.username,
         formTitle: resp.formId?.title,
         userResponses: resp.responses,
       };
