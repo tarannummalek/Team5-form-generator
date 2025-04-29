@@ -147,7 +147,7 @@ app.get("/responses", (req, res) => {
     .then((dbRes) => {
       const formatted = dbRes.map((doc) => ({
         id: doc._id,
-        username: doc.userId.username,
+        username: doc.userId.name,
         formTitle: doc.formId?.title,
         userResponses: doc.responses,
       }));
@@ -168,7 +168,7 @@ app.get("/responses/:id", (req, res) => {
       
       const formatted = {
         id: resp._id,
-        username: resp.userId.username,
+        username: resp.userId.name,
         formTitle: resp.formId?.title,
         userResponses: resp.responses,
       };

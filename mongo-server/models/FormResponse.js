@@ -10,7 +10,6 @@ const formResponseSchema = new Schema({
   userId: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User',
-  
   },
   responses: [
     {

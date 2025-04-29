@@ -73,9 +73,12 @@
             );
 
             const result = await response.json();
-            if (result._id) {
-              localStorage.setItem("userId", result.userId);
+
+
+            if(result.id){
+              localStorage.setItem("userId", result.id);
             }
+
             if (response.ok) {
               alert("Login Successful!");
               if (result.role === "admin") {
